@@ -6,3 +6,6 @@ tgbot/handlers/__pycache__/paginator.cpython-39.pyc
 tgbot/tools/__pycache__/logger.cpython-39.pyc
 database.db
 .vscode/launch.json
+tgbot/types/__pycache__/models.cpython-39.pyc
+patchnote.txt
+cache/a7fa03c47b70f525b046b20aba4b04bce52ee0052ed084e46f476d72c8b69983
