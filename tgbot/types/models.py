@@ -1,10 +1,23 @@
+'''
+Этот модуль пытается спародировать истему моделей из Django Framework.
+
+Классы таблиц должны быть dataclass и наслдедоваться от Model.
+
+Поля создаются при помощи метода-псевдоконструктора Model.SQLite_field.
+Соответсвенно Model.SQLite_field принимает параметры настройки поля данных
+'''
+
 import sqlite3
+from pathlib import Path
 from dataclasses import dataclass, asdict, field, fields, Field
 
+try:
+    from tgbot.tools.config import DB_DIR
+except ImportError:
+    DB_DIR = './'
 
-DB_PATH = 'database.db'
-
-connection = sqlite3.Connection(DB_PATH, check_same_thread=False)
+path = Path(DB_DIR) / 'database.db'
+connection = sqlite3.Connection(path, check_same_thread=False)
 connection.execute('PRAGMA foreign_keys = ON;')
 
 
@@ -93,9 +106,9 @@ class Model:
 
             Сравниваемые - включчают метод сравнения
                 Синтаксис:
-                    "<имя поля>__eq" - равно
+                    "<имя поля>__eq" - равно (то же самое, что и конкретные)
 
-                    "<имя поля>__ne" - не равно
+                    "<имя поля>__ne" - не равно (то же самое, что и исключающие)
 
                     "<имя поля>__lt" - меньше
 
@@ -120,6 +133,13 @@ class Model:
 
         Примечание:
             Если НЕ УКАЗАН НИ ОДИН фильтр, то создастся запрос для выборки ВСЕХ данных
+
+
+        Args:
+            **kwargs - фильтры запроса
+
+        Returns:
+            Строку с SELECT SQLite запросом
         '''
 
         columns = cls.field_names
@@ -131,7 +151,7 @@ class Model:
             cols = list(filter(lambda s: key.startswith(s), columns))
             if not cols:
                 raise ValueError(f"Unexpected field '{key}'")
-            
+
             col, method = key.split('__') + [None]
 
             if method in ('eq', None):
@@ -175,7 +195,31 @@ class Model:
                      foreign_key: tuple = None,  # пара (<таблица>, <столбец>)
                      on_delete: str = None,
                      on_update: str = None):
+        '''
+        Создает dataclass.Field, но помещает некоторую информацию в dataclass.Field.metadata
 
+        Args:
+            type:          str             - SQLite тип данных поля
+            
+            not_null:      bool            - может ли поле быть пустым
+
+            primary_key:   bool            - первичный ключ
+
+            autoincrement: bool            - автоматическое наращивание ключа (только для type="integer")
+
+            unique:        bool            - нужно ли проводить проверку уникальности
+
+            default:       any             - значение поля по умолчанию
+
+            foreign_key:   tuple[str, str] - ссылка на поле, foreign_key[0] - имя таблицы, foreign_key[1] - имя колонки
+
+            on_delete:     str             - действие при удаленние ссылки (только для foreign_key != None)
+
+            on_update:     str             - действие при изменении ссылки (только для foreign_key != None)
+
+        Returns:
+            Возращает поле с заполненной metadata
+        '''
         return field(
             default=default,
             metadata={
@@ -221,21 +265,32 @@ class Model:
                 )
 
     @classmethod
+    def from_args(cls, *args):
+        arg = iter(args)
+        instance = cls()
+        for field in cls.field_names:
+            setattr(instance, field, next(arg))
+        return instance
+
+    @classmethod
     def get(cls, **kwargs):
         '''
         Выполняет запрос Model.SQLite_select_query().
 
         Форматирутирует данные в список Model-объектов
         '''
+        return [cls.from_args(*args) for args in connection.execute(cls.SQLite_select_query(**kwargs)).fetchall()]
 
-        def init(*args):
-            arg = iter(args)
-            instance = cls()
-            for field in cls.field_names:
-                setattr(instance, field, next(arg))
-            return instance
+    @classmethod
+    def get_one(cls, **kwargs):
+        '''
+        Выполняет запрос Model.SQLite_select_query(), но возвращает только первое попавшееся значение.
 
-        return [init(*args) for args in connection.execute(cls.SQLite_select_query(**kwargs)).fetchall()]
+        Форматирутирует данные в один Model-объект
+        '''
+        args_arr = connection.execute(cls.SQLite_select_query(**kwargs)).fetchall()
+        if args_arr:
+            return cls.from_args(*(args_arr[0]))
 
     def save(self, on_error=None):
         '''
@@ -269,17 +324,17 @@ class Courses(BaseTable):
 
         z_index - параметр для сортировки курсов (порядок, в котором будет отображен курс)
 
-        has_test - должен ли курс проводить тестирование в конце
+        testing_on - должен ли курс проводить тестирование в конце
 
-        shuffle_test - нужно ли перемешивать вопросы в случайном порядке
+        shuffle_tests - нужно ли перемешивать вопросы в случайном порядке
     '''
     title: str = Model.SQLite_field(
         type='text', not_null=True, unique=True)
 
-    has_test: bool = Model.SQLite_field(
+    testing_on: bool = Model.SQLite_field(
         type='boolean', not_null=True, default=False)
 
-    shuffle_test: bool = Model.SQLite_field(
+    shuffle_tests: bool = Model.SQLite_field(
         type='boolean', not_null=True, default=False)
 
 

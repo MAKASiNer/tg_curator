@@ -1,5 +1,6 @@
 import telebot
 
+from tgbot.tools.config import TTOKEN
 
-TOKEN = '5791974173:AAGbOUil-ACSXKgrbwjVqyHNvBCa-rI6jHw'
-bot = telebot.TeleBot(TOKEN)
+
+bot = telebot.TeleBot(TTOKEN)

@@ -2,20 +2,10 @@ import json
 from pathlib import Path
 from hashlib import sha256
 from telebot import types
+from base64 import b64encode
 
 from tgbot.tools import logger
-
-
-CACHE_PATH = './cache'
-
-K_HASH_LEN = 1
-
-
-__all__ = [
-    'compile_callback_data',
-    'parse_callback_data',
-    'parse_callback_query'
-]
+from tgbot.tools.config import CACHE_DIR, KEYS_HASH_SIZE
 
 
 def _filename_cache_dict() -> str:
@@ -23,7 +13,7 @@ def _filename_cache_dict() -> str:
 
 
 def _load_cache_dict() -> dict:
-    folder = Path(CACHE_PATH)
+    folder = Path(CACHE_DIR)
     try:
         with open(folder / _filename_cache_dict(), 'rt+') as file:
             return json.load(file)
@@ -33,7 +23,7 @@ def _load_cache_dict() -> dict:
 
 
 def _save_cache_dict(dct):
-    folder = Path(CACHE_PATH)
+    folder = Path(CACHE_DIR)
     with open(folder / _filename_cache_dict(), 'wt') as file:
         return json.dump(dct, file)
 
@@ -46,7 +36,10 @@ def _encode_key(key: str) -> str:
         if key == k:
             return _hash
     else:
-        _hash = len(_CACHE_DICT).to_bytes(K_HASH_LEN, 'big').hex()
+        _hash = len(_CACHE_DICT).to_bytes(KEYS_HASH_SIZE, 'big').hex()
+        # _hash = b64encode(
+        #     len(_CACHE_DICT).to_bytes(KEYS_HASH_SIZE, 'big')
+        # ).decode('utf-8')
         _CACHE_DICT[_hash] = key
         _save_cache_dict(_CACHE_DICT)
         return _hash
@@ -76,28 +69,22 @@ def _decode_value(data):
 def compile_callback_data(cmd: str, data: dict = None):
     if not data:
         data = dict()
-
-    s = json.dumps([_encode_key(cmd), _encode_value(data)],
-                   separators=(',', ':'))
-
-    print(f'{len(s)/len(json.dumps([cmd, data])):3.2%}')
-
-    if len(s) > 64:
-        logger.getLogger().error(f"length of '{s}' more than 64")
-
-    return s
+    try:
+        compr_data = [_encode_key(cmd), _encode_value(data)]
+        if len(s := json.dumps(compr_data, separators=(',', ':'))) > 64:
+            logger.getLogger().error("length of '%s' more than 64 (%s)", s, len(s))
+        return s
+    except BaseException as err:
+        logger.getLogger().exception('Callback data is invalid: %s', err, exc_info=True)
 
 
 # декомпилирует данные строки
-def parse_callback_data(s: str):
+def parse_callback_data(s: str) -> tuple[str, dict]:
     try:
-
         k, v = json.loads(s)
-        cmd: str = _decode_key(k)
-        data: dict = _decode_value(v)
-        return cmd, data
+        return _decode_key(k), _decode_value(v)
     except BaseException as err:
-        logger.getLogger().exception('Callback data is invalid: %s', err, exc_info=True)
+        logger.getLogger().exception('Callback data was corrupted: %s', err, exc_info=True)
 
 
 # декомпилируем данные из калбека
@@ -105,9 +92,8 @@ def parse_callback_query(call: types.CallbackQuery):
     return parse_callback_data(call.data)
 
 
-if __name__ == '__main__':
-
-    print(s := json.dumps(_encode_value({"c_id": 452, "msg_id": 593,
-          "data": {'content': 'яйца', 'type': 'орган'}})))
-
-    print(_decode_value(json.loads(s)))
+__all__ = [
+    'compile_callback_data',
+    'parse_callback_data',
+    'parse_callback_query'
+]
