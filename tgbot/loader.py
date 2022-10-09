@@ -1,6 +1,5 @@
-import telebot
+from telebot import TeleBot
+from tgbot.data.config import TTOKEN
 
-from tgbot.tools.config import TTOKEN
 
-
-bot = telebot.TeleBot(TTOKEN)
+bot = TeleBot(TTOKEN)
