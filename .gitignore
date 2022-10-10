@@ -1,9 +1,8 @@
-tgbot/__pycache__/loader.cpython-39.pyc
-tgbot/__pycache__/models.cpython-39.pyc
-tgbot/data/__pycache__/config.cpython-39.pyc
-tgbot/handlers/__pycache__/__init__.cpython-39.pyc
-tgbot/handlers/__pycache__/courses_handlers.cpython-39.pyc
-tgbot/handlers/__pycache__/user_handlers.cpython-39.pyc
-tgbot/utils/__pycache__/bot_utils.cpython-39.pyc
-tgbot/utils/__pycache__/callback_data_factory.cpython-39.pyc
+tgbot/__pycache__
+tgbot/data/__pycache__
+tgbot/handlers/__pycache__
+tgbot/utils/__pycache__
 database.db
+tgbot/handlers/__pycache__
+bd_filler.py
+.vscode
