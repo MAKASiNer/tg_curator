@@ -20,12 +20,17 @@ class scpApi:
 
         msg_id - идентификатор сообщения-дисплея
 
-        testing - показывать кнопку запуска тестирования?
+        end - показывать кнопку запуска тестирования?
     '''
     c_id: int
     p_id: int
     msg_id: int
-    testing: bool = False
+    end: bool = False
+
+
+@dataclass
+class ccpApi:
+    '''Апи для закрытия сообщения со страницей'''
 
 
 # возвращает отсортированные курсы
@@ -96,7 +101,7 @@ def show_course_page_callback(query: types.CallbackQuery):
             break
 
     # достигли конца курса ?
-    api.testing = True if p_i >= len(pages) - 1 else api.testing
+    api.end = True if p_i >= len(pages) - 1 else api.end
 
     markup = types.InlineKeyboardMarkup()
 
@@ -104,38 +109,45 @@ def show_course_page_callback(query: types.CallbackQuery):
     if len(pages) > 1:
         if 0 < p_i < len(pages) - 1:
             markup.add(
-                prev_page_btn(scpApi(api.c_id, pages[p_i-1].get_id(), api.msg_id, api.testing)),
-                next_page_btn(scpApi(api.c_id, pages[p_i+1].get_id(), api.msg_id, api.testing)),
+                prev_page_btn(scpApi(api.c_id, pages[p_i-1].get_id(), api.msg_id, api.end)),
+                next_page_btn(scpApi(api.c_id, pages[p_i+1].get_id(), api.msg_id, api.end)),
                 row_width=2)
         elif p_i < len(pages) - 1:
             markup.add(
-                next_page_btn(scpApi(api.c_id, pages[p_i+1].get_id(), api.msg_id, api.testing)),
+                next_page_btn(scpApi(api.c_id, pages[p_i+1].get_id(), api.msg_id, api.end)),
                 row_width=1)
         elif p_i > 0:
             markup.add(
-                prev_page_btn(scpApi(api.c_id, pages[p_i-1].get_id(), api.msg_id, api.testing)),
+                prev_page_btn(scpApi(api.c_id, pages[p_i-1].get_id(), api.msg_id, api.end)),
                 row_width=1)
 
     # если включено тестирование
-    if api.testing:
+    if api.end:
 
         from tgbot.handlers.testing_handlers import scqApi, get_questions
 
         # и для курса есть вопросы
         if (questions := get_questions(api.c_id)):
-
-            callback_data = make_callback_data(
-                cmd=scqApi.__name__,
-                data=asdict(
-                    scqApi(
-                        c_id=api.c_id,
-                        q_id=questions[0].id,
-                        msg_id=api.msg_id,
-                        score=0.0)))
-
             markup.add(
-                types.InlineKeyboardButton('Начать тест', callback_data=callback_data),
-                row_width=1
-            )
+                types.InlineKeyboardButton(
+                    text='Начать тест',
+                    callback_data=make_callback_data(
+                        cmd=scqApi.__name__,
+                        data=asdict(
+                            scqApi(
+                                c_id=api.c_id,
+                                q_id=questions[0].id,
+                                msg_id=api.msg_id,
+                                score=0.0)))))
+
+        markup.add(
+            types.InlineKeyboardButton('Закрыть', callback_data=make_callback_data(ccpApi.__name__)),
+            row_width=1
+        )
 
     bot.edit_message_text(pages[p_i].content, query.message.chat.id, api.msg_id, reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda q: parse_callback_query(q)[0] == ccpApi.__name__)
+def close_course_page_callback(query: types.CallbackQuery):
+    bot.delete_message(query.message.chat.id, query.message.id)
