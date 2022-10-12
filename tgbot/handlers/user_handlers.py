@@ -13,8 +13,7 @@ def start_handler(msg: Message):
 
     bot.send_message(chat_id=msg.chat.id,
                      text=(f'Привет, {msg.from_user.first_name}!\n'
-                           f"Введи команду {formatting.hlink('/help', '/help')} чтобы вывести список всех команд.\n"),
-                     parse_mode='html')
+                           f"Введи команду {formatting.hlink('/help', '/help')} чтобы вывести список всех команд.\n"))
 
     if Users.get_by_id(msg.from_user.id).force_status:
         bot.send_message(chat_id=msg.chat.id,
@@ -25,11 +24,11 @@ def start_handler(msg: Message):
 def help_handler(msg: Message):
     '''Список команд'''
     def docs(func):
-        return func.__doc__ if func.__doc__ else '...'
+        doc = func.__doc__
+        return doc if doc else '...'
 
     lines = [f"{formatting.hlink('/' + k, '/' + k)} - {docs(v)}"
              for k, v in get_actual_commands(bot).items()]
 
     bot.send_message(chat_id=msg.chat.id,
-                     text='\n'.join(lines),
-                     parse_mode='html')
+                     text='\n'.join(lines))
