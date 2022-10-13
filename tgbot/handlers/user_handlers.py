@@ -1,9 +1,8 @@
 from telebot import formatting
 from telebot.types import Message
 
-from tgbot.loader import bot
+from tgbot.loader import bot, get_actual_commands
 from tgbot.data.models import Users
-from tgbot.utils.bot_utils import get_actual_commands
 
 
 @bot.message_handler(commands=['start'])

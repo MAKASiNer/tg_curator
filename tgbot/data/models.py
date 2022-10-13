@@ -1,14 +1,38 @@
-from peewee import *
-from enum import Enum
-from tgbot.data.config import DB_PATH
+import peewee as pw
+import tgbot.data.config as config
 
 
-db = SqliteDatabase(DB_PATH)
+if config.DB_DBMS == 'sqlite':
+    db = pw.SqliteDatabase(config.DB_NAME)
+
+elif config.DB_DBMS == 'mysql':
+    db = pw.MySQLDatabase(
+        database=config.DB_NAME,
+        user=config.DB_USER,
+        passwd=config.DB_PASSWORD,
+        host=config.DB_HOST,
+        port=config.DB_PORT
+    )
+
+elif config.DB_DBMS == 'postgresql':
+    db = pw.PostgresqlDatabase(
+        database=config.DB_NAME,
+        user=config.DB_USER,
+        passwd=config.DB_PASSWORD,
+        host=config.DB_HOST,
+        port=config.DB_PORT
+    )
+
+else:
+    raise RuntimeError("Unavailable dbms '%s'" % config.DB_DBMS)
 
 
-class BaseModel(Model):
+class BaseModel(pw.Model):
     class Meta:
         database = db
+
+
+# -------------------------------------------------------------------------------------------------
 
 
 class CallbacksData(BaseModel):
@@ -16,7 +40,7 @@ class CallbacksData(BaseModel):
     Fields:
         json_str: str - json-строка с CallbackQuery.data
     '''
-    json_str: str = TextField(unique=True)
+    json_str: str = pw.TextField(unique=True)
 
 
 class Users(BaseModel):
@@ -25,8 +49,8 @@ class Users(BaseModel):
         username    : str  - Имя пользователя
         force_status: bool - Права админимстратора
     '''
-    username: str = TextField()
-    force_status: bool = BooleanField(default=False)
+    username: str = pw.TextField()
+    force_status: bool = pw.BooleanField(default=False)
 
 
 class Courses(BaseModel):
@@ -36,9 +60,9 @@ class Courses(BaseModel):
         testing: bool - Проводить ли тестирование в конце курса
         z_index: int  - Индекс для сортировки
     '''
-    title: str = TextField(unique=True)
-    testing: bool = BooleanField(default=True)
-    z_index: int = IntegerField(default=0)
+    title: str = pw.TextField(unique=True)
+    testing: bool = pw.BooleanField(default=True)
+    z_index: int = pw.IntegerField(default=0)
 
 
 class Pages(BaseModel):
@@ -49,10 +73,10 @@ class Pages(BaseModel):
         content_type: str - сейчас не используется
         z_index     : int - Индекс для сортировки
     '''
-    course: int = ForeignKeyField(Courses, to_field='id')
-    content: str = TextField()
-    content_type: str = TextField(default='str')
-    z_index: int = IntegerField(default=0)
+    course: int = pw.ForeignKeyField(Courses, to_field='id')
+    content: str = pw.TextField()
+    content_type: str = pw.TextField(default='str')
+    z_index: int = pw.IntegerField(default=0)
 
 
 class Questions(BaseModel):
@@ -64,11 +88,11 @@ class Questions(BaseModel):
         various  : bool     - Пользователь выбирает ответ?
         z_index  : int      - Индекс для сортировки
     '''
-    course: Courses = ForeignKeyField(Courses, to_field='id')
-    text: str = TextField()
-    plural: bool = BooleanField()
-    various: bool = BooleanField()
-    z_index: int = IntegerField(default=0)
+    course: Courses = pw.ForeignKeyField(Courses, to_field='id')
+    text: str = pw.TextField()
+    plural: bool = pw.BooleanField()
+    various: bool = pw.BooleanField()
+    z_index: int = pw.IntegerField(default=0)
 
 
 class Answers(BaseModel):
@@ -79,11 +103,14 @@ class Answers(BaseModel):
         right   : bool       - Это верный ответ?
         z_index : int        - Индекс для сортировки
     '''
-    question: Questions = ForeignKeyField(Questions, to_field='id')
-    text: str = TextField()
-    right: bool = BooleanField(default=False)
-    z_index: int = IntegerField(default=0)
+    question: Questions = pw.ForeignKeyField(Questions, to_field='id')
+    text: str = pw.TextField()
+    right: bool = pw.BooleanField(default=False)
+    z_index: int = pw.IntegerField(default=0)
+
+
+# -------------------------------------------------------------------------------------------------
 
 
 db.connect()
-db.create_tables([CallbacksData, Users, Courses, Pages, Questions, Answers])
+db.create_tables([CallbacksData, Users, Courses, Pages, Questions, Answers], safe=True)

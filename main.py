@@ -1,7 +1,6 @@
-from tgbot.loader import bot
+from tgbot.loader import *
 from tgbot.handlers import *
-from tgbot.utils.bot_utils import setup_commands_menu
 
 
-setup_commands_menu(bot)
-bot.infinity_polling()
+if __name__ == '__main__':
+    bot.infinity_polling()

@@ -4,5 +4,4 @@ tgbot/handlers/__pycache__
 tgbot/utils/__pycache__
 database.db
 tgbot/handlers/__pycache__
-bd_filler.py
 .vscode
