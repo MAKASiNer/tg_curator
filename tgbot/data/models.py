@@ -1,3 +1,4 @@
+from datetime import datetime
 import peewee as pw
 import tgbot.data.config as config
 
@@ -46,11 +47,24 @@ class CallbacksData(BaseModel):
 class Users(BaseModel):
     '''
     Fields:
+        id          : int  - Соответсвует chat_id 
         username    : str  - Имя пользователя
         force_status: bool - Права админимстратора
     '''
     username: str = pw.TextField()
     force_status: bool = pw.BooleanField(default=False)
+
+
+class Sessions(BaseModel):
+    '''
+    Таблица сессий
+
+    Fields:
+        user         : User     - пользователь
+        last_activity: datetime - Время последней отправки сообщения
+    '''
+    user: Users = pw.ForeignKeyField(Users, field='id')
+    last_activity: datetime = pw.DateTimeField()
 
 
 class Courses(BaseModel):
@@ -113,4 +127,4 @@ class Answers(BaseModel):
 
 
 db.connect()
-db.create_tables([CallbacksData, Users, Courses, Pages, Questions, Answers], safe=True)
+db.create_tables([CallbacksData, Users, Sessions, Courses, Pages, Questions, Answers], safe=True)

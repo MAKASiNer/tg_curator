@@ -2,6 +2,6 @@ tgbot/__pycache__
 tgbot/data/__pycache__
 tgbot/handlers/__pycache__
 tgbot/utils/__pycache__
+tgbot/filters/__pycache__
 database.db
-tgbot/handlers/__pycache__
 .vscode

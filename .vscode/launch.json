@@ -17,6 +17,7 @@
             "type": "python",
             "request": "launch",
             "program": "main.py",
+            "args": ["run"],
             "console": "integratedTerminal",
             "justMyCode": true
         }

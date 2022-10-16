@@ -1,6 +1,5 @@
 import ttl_cache
 from telebot import types
-from dataclasses import dataclass, asdict
 
 from tgbot.loader import bot
 from tgbot.data.models import Courses, Pages
@@ -28,7 +27,13 @@ class SCPapi(Api):
 
 @apiclass
 class CCPapi(Api):
-    '''Апи для закрытия сообщения со страницей'''
+    '''
+    Апи для закрытия сообщения со страницей
+
+    Fields:
+        msg_id: int  - идентификатор сообщения-дисплея
+    '''
+    msg_id: int = 0
 
 
 # возвращает отсортированные курсы
@@ -57,12 +62,9 @@ def courses_handler(msg: types.Message):
     markup = types.InlineKeyboardMarkup(row_width=1)
     for c in get_courses():
         if get_pages(c.id):
-
-            data = SCPapi(c_id=c.id, p_id=get_pages(c.id)[0].id, msg_id=msg_id)
-
             markup.add(types.InlineKeyboardButton(
                 text=c.title,
-                callback_data=data.make_callback_data()
+                callback_data=SCPapi(c_id=c.id, p_id=get_pages(c.id)[0].id, msg_id=msg_id).make_callback_data()
             ))
 
     bot.edit_message_reply_markup(
@@ -124,7 +126,7 @@ def show_course_page_callback(query: types.CallbackQuery):
                                      score=0.0).make_callback_data())
             markup.add(btn)
 
-        btn = types.InlineKeyboardButton('Закрыть', callback_data=CCPapi().make_callback_data())
+        btn = types.InlineKeyboardButton('Закрыть', callback_data=CCPapi(msg_id=api.msg_id).make_callback_data())
         markup.add(btn)
 
     bot.edit_message_text(pages[p_i].content, query.message.chat.id, api.msg_id, reply_markup=markup)
@@ -132,4 +134,5 @@ def show_course_page_callback(query: types.CallbackQuery):
 
 @ bot.callback_query_handler(func=CCPapi.filter)
 def close_course_page_callback(query: types.CallbackQuery):
-    bot.delete_message(query.message.chat.id, query.message.id)
+    api = CCPapi.parse_callback_query(query)
+    bot.delete_message(query.message.chat.id, api.msg_id)
