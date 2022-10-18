@@ -3,23 +3,25 @@ from telebot.types import Message, CallbackQuery
 
 from tgbot.loader import bot, get_actual_commands
 from tgbot.data.models import Users
+from tgbot.filters.sessions_registrator import *
 
 
 # проверка на НЕ админа
-def is_average(user_id: int):
+def is_user(user_id: int):
     user: Users = Users.get_or_none(id=user_id)
     return not user or not user.force_status
 
 
 # проверка сообщения от обычного пользователя
-def from_average(msg):
+def from_user(msg):
     if isinstance(msg, (Message, CallbackQuery)):
-        return is_average(msg.from_user.id)
+        return is_user(msg.from_user.id)
     else:
         raise TypeError("msg must be 'Message' or 'CallbackQuery' class, not '%s'" % type(msg))
 
 
-@bot.message_handler(commands=['start'], func=from_average)
+@bot.message_handler(commands=['start'], func=from_user)
+@register_user_session
 def start_handler(msg: Message):
     '''Приветствие'''
     bot.send_message(chat_id=msg.chat.id,

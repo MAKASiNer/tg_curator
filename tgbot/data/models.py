@@ -47,15 +47,17 @@ class CallbacksData(BaseModel):
 class Users(BaseModel):
     '''
     Fields:
-        id          : int  - Соответсвует chat_id 
-        username    : str  - Имя пользователя
-        force_status: bool - Права админимстратора
+        id             : int  - Соответсвует chat_id 
+        username       : str  - Имя пользователя
+        force_status   : bool - Права админимстратора
+        hashed_password: str - хеш пароля
     '''
     username: str = pw.TextField()
     force_status: bool = pw.BooleanField(default=False)
+    hashed_password: str = pw.TextField(null=True, unique=True)
 
 
-class Sessions(BaseModel):
+class SuperuserSessions(BaseModel):
     '''
     Таблица сессий
 
@@ -127,4 +129,4 @@ class Answers(BaseModel):
 
 
 db.connect()
-db.create_tables([CallbacksData, Users, Sessions, Courses, Pages, Questions, Answers], safe=True)
+db.create_tables([CallbacksData, Users, SuperuserSessions, Courses, Pages, Questions, Answers], safe=True)

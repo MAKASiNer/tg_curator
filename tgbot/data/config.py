@@ -22,19 +22,6 @@ def safe_getopt(section, option, *, default=None):
     return _config[section][option]
 
 
-# Помещает в файл конфига и возвращает новый пригласительный код
-def update_admin_invitation():
-    code = randbytes(16).hex()
-    try:
-        _config.add_section(SERVICE)
-    except DuplicateSectionError:
-        pass
-    finally:
-        _config[SERVICE]['admin_invitation_code'] = code
-        save_cfg()
-    return code
-
-
 # Загружает конфиг из файла
 def load_cfg():
     global _config
