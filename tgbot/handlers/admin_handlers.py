@@ -7,7 +7,7 @@ from tgbot.utils.callback_data_factory import *
 from tgbot.filters.sessions_registrator import *
 
 
-MAXIMUM_ATTEMPTS = 3
+MAXIMUM_ATTEMPTS = 4
 SIGNIN_TIMEOUT = 15
 
 
@@ -56,9 +56,9 @@ def signin_superuser(msg: types.Message):
             at_left = MAXIMUM_ATTEMPTS - attempt
             if at_left == MAXIMUM_ATTEMPTS:
                 text = 'Введи пароль'
-            elif 0 < at_left < MAXIMUM_ATTEMPTS:
+            elif 1 < at_left < MAXIMUM_ATTEMPTS:
                 text = 'Введи пароль (осталось попыток: %s)' % at_left
-            elif at_left == 0:
+            elif at_left == 1:
                 text = 'Введи верный пароль, иначе потеряешь права администратора'
             bot.edit_message_text(text, m.chat.id, msg_id)
             bot.register_next_step_handler(msg, callback, msg_id, attempt + 1)
